@@ -1,48 +1,62 @@
 from db_config import get_collection, clear_screen
-from Utilities.insert_data import run_insert
-from Utilities.delete_data import run_semantic_delete
+from utilities.insert_data import run_insert
+from utilities.delete_data import run_semantic_delete
+from utilities.update_data import run_update
+
+def semantic_search_flow(col_name):
+    collection = get_collection(col_name)
+    query_text = input("Mau cari informasi apa?: ")
+    results = collection.query(query_texts=[query_text], n_results=5)
+
+    if not results['ids'][0]:
+        print("⚠️ Data tidak ditemukan."); return
+
+    index = 0
+    while index < len(results['ids'][0]):
+        clear_screen()
+        print(f"--- HASIL PENCARIAN [{col_name.upper()}] (Rank-{index+1}) ---")
+        print(f"ID       : {results['ids'][0][index]}")
+        print(f"Konten   : {results['documents'][0][index]}")
+        print(f"Metadata : {results['metadatas'][0][index]}")
+        print("------------------------------------------------")
+        
+        print("\nOpsi: [b] Kembali ke Menu Utama | [n] Lihat Hasil Berikutnya (Next)")
+        choice = input("Pilih: ").lower()
+
+        if choice == 'b': break
+        elif choice == 'n':
+            index += 1
+            if index >= len(results['ids'][0]):
+                print("🏁 Semua hasil sudah ditampilkan.")
+                input("Tekan Enter..."); break
+        else: print("Pilihan tidak valid.")
 
 def main():
     clear_screen()
-    # Pilihan koleksi awal
-    print("--- PILIH KATEGORI PERSONALISASI ---")
-    print("1. Japanese Learning")
-    print("2. Game Development")
-    print("3. General/Lainnya")
-    kat = input("Pilih (1-3): ")
-    
+    print("--- PILIH KATEGORI ---")
+    print("1. Japanese Learning\n2. Game Development\n3. General")
+    kat = input("Pilih: ")
     col_name = "japanese_learning" if kat == "1" else "game_dev" if kat == "2" else "general"
     
-    current_collection = get_collection(col_name)
-    clear_screen()
-
     while True:
-        print(f"\n=== COMMAND CENTER: [{col_name.upper()}] ===")
-        print("1. Insert Data (Pilih File)")
-        print("2. Cari Data (Semantic Search)")
-        print("3. Hapus Data (Semantic Search)")
-        print("4. Ganti Kategori")
-        print("5. Keluar")
+        clear_screen()
+        print(f"=== DATABASE: [{col_name.upper()}] ===")
+        print("1. Insert/Sync File\n2. Semantic Search\n3. Update Manual\n4. Semantic Delete\n5. Ganti Kategori\n6. Keluar")
         
-        pilihan = input("\nPilih menu (1-5): ")
-
-        if pilihan == "1":
-            file_name = input("Masukkan nama file data (misal: data_kanji): ")
-            # Pastikan fungsi run_insert di file lain menerima col_name
-            run_insert(file_name, col_name) 
-        elif pilihan == "2":
-            query = input("Cari apa hari ini?: ")
-            res = current_collection.query(query_texts=[query], n_results=1)
-            clear_screen()
-            if res['documents'][0]:
-                print(f"Hasil Terkait:\n> {res['documents'][0][0]}")
-            else:
-                print("Data tidak ditemukan.")
-        elif pilihan == "3":
+        p = input("\nPilih menu: ")
+        if p == "1":
+            fname = input("Nama file data: "); run_insert(fname, col_name)
+        elif p == "2":
+            semantic_search_flow(col_name)
+        elif p == "3":
+            run_update(col_name)
+        elif p == "4":
             run_semantic_delete(col_name)
-        elif pilihan == "4":
-            main() # Kembali ke pemilihan kategori
+        elif p == "5":
+            main(); break
+        elif p == "6":
             break
-        elif pilihan == "5":
-            print("Shutting down...")
-            break
+        input("\nTekan Enter untuk lanjut...")
+
+if __name__ == "__main__":
+    main()
