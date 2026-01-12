@@ -1,39 +1,48 @@
-import os
-from insert_data import run_insert
-from update_data import run_update
-from delete_data import run_delete
-from db_config import get_collection
+from db_config import get_collection, clear_screen
+from Utilities.insert_data import run_insert
+from Utilities.delete_data import run_semantic_delete
 
 def main():
+    clear_screen()
+    # Pilihan koleksi awal
+    print("--- PILIH KATEGORI PERSONALISASI ---")
+    print("1. Japanese Learning")
+    print("2. Game Development")
+    print("3. General/Lainnya")
+    kat = input("Pilih (1-3): ")
+    
+    col_name = "japanese_learning" if kat == "1" else "game_dev" if kat == "2" else "general"
+    
+    current_collection = get_collection(col_name)
+    clear_screen()
+
     while True:
-        print("\n=== CHROMA DB COMMAND CENTER ===")
-        print("1. Insert/Sync Data (dari dummy_data.py)")
+        print(f"\n=== COMMAND CENTER: [{col_name.upper()}] ===")
+        print("1. Insert Data (Pilih File)")
         print("2. Cari Data (Semantic Search)")
-        print("3. Update Data Manual")
-        print("4. Hapus Data")
+        print("3. Hapus Data (Semantic Search)")
+        print("4. Ganti Kategori")
         print("5. Keluar")
         
-        pilihan = input("Pilih menu (1-5): ")
+        pilihan = input("\nPilih menu (1-5): ")
 
         if pilihan == "1":
-            run_insert()
+            file_name = input("Masukkan nama file data (misal: data_kanji): ")
+            # Pastikan fungsi run_insert di file lain menerima col_name
+            run_insert(file_name, col_name) 
         elif pilihan == "2":
-            query = input("Masukkan keyword pencarian: ")
-            collection = get_collection()
-            res = collection.query(query_texts=[query], n_results=1)
-            print(f"\nHasil: {res['documents'][0]}")
+            query = input("Cari apa hari ini?: ")
+            res = current_collection.query(query_texts=[query], n_results=1)
+            clear_screen()
+            if res['documents'][0]:
+                print(f"Hasil Terkait:\n> {res['documents'][0][0]}")
+            else:
+                print("Data tidak ditemukan.")
         elif pilihan == "3":
-            target_id = input("Masukkan ID yang akan diupdate: ")
-            new_doc = input("Masukkan konten baru: ")
-            run_update(target_id, new_doc)
+            run_semantic_delete(col_name)
         elif pilihan == "4":
-            target_id = input("Masukkan ID yang akan dihapus: ")
-            run_delete(target_id)
-        elif pilihan == "5":
-            print("Sampai jumpa!")
+            main() # Kembali ke pemilihan kategori
             break
-        else:
-            print("Pilihan tidak valid.")
-
-if __name__ == "__main__":
-    main()
+        elif pilihan == "5":
+            print("Shutting down...")
+            break
