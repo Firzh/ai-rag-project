@@ -7,7 +7,7 @@ ANKI_URL = "http://localhost:8765"
 def invoke(action, **params):
     return requests.post(ANKI_URL, json.dumps({"action": action, "version": 6, "params": params})).json()
 
-def sync_daily_anki(col_name):
+def sync_anki_optimized(col_name):
     # 1. Cek apakah Anki terbuka
     try:
         # 2. Cari kartu yang dipelajari/diubah dalam 24 jam terakhir
@@ -20,20 +20,16 @@ def sync_daily_anki(col_name):
 
         # 3. Ambil detail konten kartu
         notes_info = invoke("notesInfo", notes=note_ids)['result']
-        
-        collection = db.get_collection(col_name)
+        all_ids, all_docs, all_metas = [], [], []
         
         for note in notes_info:
-            # Mengambil data dari field (biasanya 'Front' dan 'Back')
-            front = note['fields']['Front']['value']
-            back = note['fields']['Back']['value']
-            
-            # Upsert ke ChromaDB
-            collection.upsert(
-                ids=[str(note['noteId'])],
-                documents=[f"Anki Card - Front: {front} | Back: {back}"],
-                metadatas=[{"source": "anki_sync", "type": "daily_practice"}]
-            )
+            all_ids.append(str(note['noteId']))
+            all_docs.append(f"Front: {note['fields']['Front']['value']} | Back: {note['fields']['Back']['value']}")
+            all_metas.append({"source": "anki", "tags": note['tags']})
+
+        # Optimasi: Kirim dalam satu batch besar
+        collection = db.get_collection(col_name)
+        collection.upsert(ids=all_ids, documents=all_docs, metadatas=all_metas)
             
         print(f"✅ Berhasil sinkronisasi {len(note_ids)} kartu dari sesi latihan hari ini.")
         

@@ -44,10 +44,10 @@ def main():
         # Ambil daftar koleksi terbaru secara dinamis
         collections = db.list_all_collections()
         
-        print("=== CHROMA DB DYNAMIC COMMAND CENTER ===")
+        print("============= Chroma DB Dynamic Command Center =============")
         print("1. Tambah Collection Baru")
         print("2. Search In Collection (Quick Search)")
-        print("3. Delete From Collection (Quick Delete)")
+        print("3. Delete From Collection (Quick Delete)\n")
         
         # Opsi 4 ke atas diisi oleh koleksi yang ada (Auto Increment)
         offset = 4
@@ -55,7 +55,7 @@ def main():
             print(f"{i + offset}. {name.replace('_', ' ').title()}")
             
         exit_num = len(collections) + offset
-        print(f"{exit_num}. Keluar")
+        print(f"\n{exit_num}. Keluar")
         
         choice = input(f"\nPilih opsi (1-{exit_num}): ")
         

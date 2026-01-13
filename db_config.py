@@ -6,9 +6,13 @@ DB_PATH = "./db_personal"
 def get_client():
     return chromadb.PersistentClient(path=DB_PATH)
 
-def get_collection(collection_name="general"):
+def get_collection(collection_name):
     client = get_client()
-    return client.get_or_create_collection(name=collection_name)
+    return client.get_or_create_collection(
+        name=collection_name,
+        # Optimasi HNSW untuk performa search
+        metadata={"hnsw:space": "cosine", "hnsw:construction_ef": 128, "hnsw:M": 16}
+    )
 
 def list_all_collections():
     client = get_client()
