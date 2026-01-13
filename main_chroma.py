@@ -2,6 +2,7 @@ import db_config as db
 from utilities.insert_data import run_insert
 from utilities.delete_data import run_semantic_delete
 from utilities.update_data import run_update
+from utilities.view_data import run_view_data  # Import fungsi baru
 
 def semantic_search_flow(col_name):
     collection = db.get_collection(col_name)
@@ -10,7 +11,6 @@ def semantic_search_flow(col_name):
     query_text = input("Mau cari informasi apa?: ")
     if not query_text: return
     
-    # Mencari 5 hasil terdekat berdasarkan konten (Semantic)
     results = collection.query(query_texts=[query_text], n_results=5)
 
     if not results['ids'] or not results['ids'][0]:
@@ -41,16 +41,16 @@ def semantic_search_flow(col_name):
 def main():
     while True:
         db.clear_screen()
-        # Ambil daftar koleksi terbaru secara dinamis
         collections = db.list_all_collections()
         
         print("============= Chroma DB Dynamic Command Center =============")
         print("1. Tambah Collection Baru")
         print("2. Search In Collection (Quick Search)")
-        print("3. Delete From Collection (Quick Delete)\n")
+        print("3. Delete From Collection (Quick Delete)")
+        print("4. Lihat Seluruh Data (Tabel View)\n")  # Opsi baru di nomor 4
         
-        # Opsi 4 ke atas diisi oleh koleksi yang ada (Auto Increment)
-        offset = 4
+        # Opsi 5 ke atas diisi oleh koleksi yang ada (Offset menjadi 5)
+        offset = 5
         for i, name in enumerate(collections):
             print(f"{i + offset}. {name.replace('_', ' ').title()}")
             
@@ -62,7 +62,7 @@ def main():
         if not choice.isdigit(): continue
         choice = int(choice)
 
-        # LOGIKA MENU
+        # LOGIKA MENU UTAMA
         if choice == 1:
             new_name = input("Masukkan nama collection baru: ").lower().replace(" ", "_")
             if new_name:
@@ -70,18 +70,23 @@ def main():
                 print(f"✅ Collection '{new_name}' siap.")
                 input("Enter...")
 
-        elif choice == 2 or choice == 3:
+        elif choice in [2, 3, 4]:
             db.clear_screen()
-            target_action = "SEARCH" if choice == 2 else "DELETE"
+            # Mapping teks untuk menu pemilihan koleksi
+            action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW"}
+            target_action = action_map[choice]
+            
             print(f"--- PILIH KOLEKSI UNTUK {target_action} ---")
             for i, c in enumerate(collections): print(f"{i+1}. {c}")
             idx = input("Pilih nomor koleksi: ")
+            
             if idx.isdigit() and 0 < int(idx) <= len(collections):
                 selected = collections[int(idx)-1]
-                semantic_search_flow(selected) if choice == 2 else run_semantic_delete(selected)
+                if choice == 2: semantic_search_flow(selected)
+                elif choice == 3: run_semantic_delete(selected)
+                elif choice == 4: run_view_data(selected) # Menjalankan view_data
 
         elif offset <= choice < exit_num:
-            # Masuk ke sub-menu koleksi spesifik
             selected_col = collections[choice - offset]
             manage_specific_collection(selected_col)
 
@@ -93,17 +98,25 @@ def manage_specific_collection(col_name):
     while True:
         db.clear_screen()
         print(f"=== MANAGE: [{col_name.upper()}] ===")
-        print("1. Insert/Sync Data\n2. Search Semantic\n3. Update Manual\n4. Delete Semantic\n5. Kembali")
+        print("1. Insert/Sync Data")
+        print("2. Search Semantic")
+        print("3. Lihat Seluruh Data (Tabel View)") # Juga ditambahkan di sub-menu agar konsisten
+        print("4. Update Manual")
+        print("5. Delete Semantic")
+        print("6. Kembali")
+        
         p = input("\nPilih: ")
         if p == "1":
             fname = input("Nama file data: "); run_insert(fname, col_name)
         elif p == "2":
             semantic_search_flow(col_name)
         elif p == "3":
-            run_update(col_name)
+            run_view_data(col_name)
         elif p == "4":
-            run_semantic_delete(col_name)
+            run_update(col_name)
         elif p == "5":
+            run_semantic_delete(col_name)
+        elif p == "6":
             break
         input("\nTekan Enter...")
 

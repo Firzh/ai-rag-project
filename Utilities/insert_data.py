@@ -4,7 +4,7 @@ from db_config import get_collection, clear_screen
 def run_insert(file_name, col_name):
     try:
         # Load modul secara dinamis berdasarkan input user
-        data_module = importlib.import_module(file_name)
+        data_module = importlib.import_module(f"data.{file_name}")
         data_to_insert = data_module.DATA_LIST
         
         collection = get_collection(col_name)
