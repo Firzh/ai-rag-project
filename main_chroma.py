@@ -1,5 +1,6 @@
 import db_config as db
 import utilities.delete_data as delete_util
+from utilities.central_testing import main_test
 from utilities.insert_data import run_insert
 from utilities.update_data import run_update
 from utilities.view_data import run_view_data
@@ -49,10 +50,11 @@ def main():
         print("2. Search In Collection (Quick Search)")
         print("3. Delete From Collection (Quick Delete)")
         print("4. Lihat Seluruh Data (Tabel View)")
-        print("5. Sync Anki (Daily Practice)\n")
+        print("5. Sync Anki (Daily Practice)")
+        print("6. Central Testing & Debug Center\n")
         
         # Opsi 5 ke atas diisi oleh koleksi yang ada (Offset menjadi 5)
-        offset = 6
+        offset = 7
         for i, name in enumerate(collections):
             print(f"{i + offset}. {name.replace('_', ' ').title()}")
             
@@ -72,10 +74,10 @@ def main():
                 print(f"✅ Collection '{new_name}' siap.")
                 input("Enter...")
 
-        elif choice in [2, 3, 4, 5]:
+        elif choice in [2, 3, 4, 5, 6]:
             db.clear_screen()
             # Mapping teks untuk menu pemilihan koleksi
-            action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW", 5: "SYNC ANKI"}
+            action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW", 5: "SYNC ANKI", 6: "TESTING"}
             target_action = action_map[choice]
             
             print(f"--- PILIH KOLEKSI UNTUK {target_action} ---")
@@ -88,6 +90,7 @@ def main():
                 elif choice == 3: delete_util.run_semantic_delete(selected)
                 elif choice == 4: run_view_data(selected)
                 elif choice == 5: sync_anki_to_chroma(selected)
+                elif choice == 6: main_test()
             # else:
             #     print("⚠️ Pilihan koleksi tidak valid.")
             

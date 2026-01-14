@@ -78,3 +78,22 @@ def sync_anki_to_chroma(col_name):
         print("\n❌ ERROR: Anki tidak terdeteksi. Pastikan aplikasi Anki sudah terbuka.")
     except Exception as e:
         print(f"\n❌ ERROR Sinkronisasi: {e}")
+
+def build_rich_doc(fields_dict):
+    """Membangun dokumen hanya dari field yang memiliki isi."""
+    lines = []
+    labels = {
+        'Kanji': 'Kanji',
+        'Meanings': 'Arti',
+        'Kunyomi': 'Kun',
+        'Onyomi': 'On',
+        'Mnemonic': 'Cerita/Mnemonic',
+        'Words': 'Contoh'
+    }
+    
+    for key, label in labels.items():
+        val = clean_html(fields_dict.get(key, {}).get('value', ''))
+        if val: # Hanya tambahkan jika ada isinya
+            lines.append(f"{label}: {val}")
+            
+    return "\n".join(lines)
