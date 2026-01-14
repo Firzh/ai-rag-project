@@ -26,8 +26,6 @@ def get_collection(collection_name):
     #     metadata={"hnsw:space": "cosine", "hnsw:construction_ef": 128, "hnsw:M": 16}
     # )
 
-
-
 def list_all_collections():
     client = get_client()
     # Mengambil semua objek koleksi dan mengembalikan daftar namanya

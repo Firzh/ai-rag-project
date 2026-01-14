@@ -40,3 +40,55 @@ def run_semantic_delete(col_name):
         elif choice == 'c':
             print("❌ Penghapusan dibatalkan.")
             break
+
+def run_clear_collection(col_name):
+    """Menghapus seluruh data dalam satu koleksi."""
+    collection = get_collection(col_name)
+    count = collection.count()
+    
+    if count == 0:
+        print(f"⚠️ Koleksi [{col_name.upper()}] sudah kosong.")
+        return
+
+    print(f"❗ PERINGATAN: Anda akan menghapus SELURUH data ({count} item) di [{col_name.upper()}].")
+    confirm = input("Ketik 'YAKIN' untuk melanjutkan: ")
+    
+    if confirm == 'YAKIN':
+        # Mengambil semua ID untuk dihapus
+        all_ids = collection.get()['ids']
+        collection.delete(ids=all_ids)
+        print(f"🔥 BERHASIL: Koleksi [{col_name.upper()}] dikosongkan.")
+    else:
+        print("❌ Pembatalan dilakukan.")
+
+def run_batch_delete(col_name):
+    """Mencari 10 data mirip dan memilih yang ingin dihapus."""
+    collection = get_collection(col_name)
+    query = input("Cari hal mirip yang ingin di-batch delete: ")
+    res = collection.query(query_texts=[query], n_results=10)
+    
+    if not res['ids'][0]:
+        print("⚠️ Tidak ada data ditemukan."); return
+
+    ids = res['ids'][0]
+    docs = res['documents'][0]
+    
+    print(f"\n--- HASIL PENCARIAN (Pilih nomor untuk dihapus) ---")
+    for i in range(len(ids)):
+        print(f"[{i+1}] ID: {ids[i]} | Konten: {docs[i][:80]}...")
+
+    selection = input("\nMasukkan nomor yang ingin dihapus (contoh: 1,3,5) atau '0' untuk batal: ")
+    if selection == '0' or not selection: return
+
+    try:
+        # Parsing input user (e.g. "1,3" -> [ids[0], ids[2]])
+        indices = [int(x.strip()) - 1 for x in selection.split(',')]
+        target_ids = [ids[i] for i in indices if 0 <= i < len(ids)]
+        
+        print(f"Target hapus: {len(target_ids)} data.")
+        confirm = input("Konfirmasi hapus? (y/n): ").lower()
+        if confirm == 'y':
+            collection.delete(ids=target_ids)
+            print(f"🗑️ BERHASIL: {len(target_ids)} data dihapus.")
+    except Exception as e:
+        print(f"❌ Input tidak valid: {e}")

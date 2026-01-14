@@ -1,6 +1,7 @@
 import requests
 import json
 import db_config as db
+from utilities.sanitizer import clean_html
 
 ANKI_URL = "http://localhost:8765"
 
@@ -29,12 +30,12 @@ def sync_anki_to_chroma(col_name):
             f = note['fields']
 
             # 1. Ekstraksi field berdasarkan hasil debug
-            kanji = f.get('Kanji', {}).get('value', '')
-            meanings = f.get('Meanings', {}).get('value', '')
-            on_reading = f.get('Onyomi', {}).get('value', '')
-            kun_reading = f.get('Kunyomi', {}).get('value', '')
-            mnemonic = f.get('Mnemonic', {}).get('value', '')
-            words = f.get('Words', {}).get('value', '')
+            kanji = clean_html(f.get('Kanji', {}).get('value', ''))
+            meanings = clean_html(f.get('Meanings', {}).get('value', ''))
+            on_reading = clean_html(f.get('Onyomi', {}).get('value', ''))
+            kun_reading = clean_html(f.get('Kunyomi', {}).get('value', ''))
+            mnemonic = clean_html(f.get('Mnemonic', {}).get('value', ''))
+            words = clean_html(f.get('Words', {}).get('value', ''))
 
             # 2. Bangun Document "Rich Context" (Agar Semantic Search Pintar)
             # Kita buat format yang rapi agar model L12 paham hubungannya

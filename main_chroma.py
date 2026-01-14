@@ -1,6 +1,6 @@
 import db_config as db
+import utilities.delete_data as delete_util
 from utilities.insert_data import run_insert
-from utilities.delete_data import run_semantic_delete
 from utilities.update_data import run_update
 from utilities.view_data import run_view_data
 from utilities.anki_sync import sync_anki_to_chroma
@@ -85,7 +85,7 @@ def main():
             if idx.isdigit() and 0 < int(idx) <= len(collections):
                 selected = collections[int(idx)-1]
                 if choice == 2: semantic_search_flow(selected)
-                elif choice == 3: run_semantic_delete(selected)
+                elif choice == 3: delete_util.run_semantic_delete(selected)
                 elif choice == 4: run_view_data(selected)
                 elif choice == 5: sync_anki_to_chroma(selected)
             # else:
@@ -110,7 +110,9 @@ def manage_specific_collection(col_name):
         print("3. Lihat Seluruh Data (Tabel View)") # Juga ditambahkan di sub-menu agar konsisten
         print("4. Update Manual")
         print("5. Delete Semantic")
-        print("6. Kembali")
+        print("6. Batch Delete (Pilih 10)") 
+        print("7. Hapus Seluruh Isi Koleksi")
+        print("8. Kembali")
         
         p = input("\nPilih: ")
         if p == "1":
@@ -122,8 +124,12 @@ def manage_specific_collection(col_name):
         elif p == "4":
             run_update(col_name)
         elif p == "5":
-            run_semantic_delete(col_name)
+            delete_util.run_semantic_delete(col_name)
         elif p == "6":
+            delete_util.run_batch_delete(col_name)
+        elif p == "7":
+            delete_util.run_clear_collection(col_name)
+        elif p == "8":
             break
         input("\nTekan Enter...")
 
