@@ -79,6 +79,7 @@ def main_test():
         print("1. Uji Koneksi Anki")
         print("2. Uji Sanitasi & Logic ID Anki (Daily)")
         print("3. Cek Dimensi Vektor (Verify L12)")
+        print("4. Cek Numbering ID Unik")
         print("0. Kembali ke Menu Utama")
         
         choice = input("\nPilih Uji: ")
@@ -86,6 +87,7 @@ def main_test():
         if choice == "1": test_anki_connection()
         elif choice == "2": run_anki_logic_test()
         elif choice == "3": check_model()
+        elif choice == "4":anki.test_numbering()
         elif choice == "0": break
         
         input("\nTekan Enter untuk lanjut...")

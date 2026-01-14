@@ -2,6 +2,7 @@ import requests
 import json
 import db_config as db
 from utilities.sanitizer import clean_html
+from utilities.sanitizer import extract_svg_filename
 
 ANKI_URL = "http://localhost:8765"
 
@@ -39,23 +40,19 @@ def sync_anki_to_chroma(col_name):
 
             # 2. Bangun Document "Rich Context" (Agar Semantic Search Pintar)
             # Kita buat format yang rapi agar model L12 paham hubungannya
-            rich_doc = (
-                f"Kanji: {kanji}\n"
-                f"Arti: {meanings}\n"
-                f"Kunyomi: {kun_reading}\n"
-                f"Onyomi: {on_reading}\n"
-                f"Mnemonic: {mnemonic}\n"
-                f"Contoh Kata: {words}"
-            )
+            rich_doc = build_rich_doc(f)
             
             # 3. Masukkan ke List jika Kanji dan Arti ada
             if kanji and meanings:
                 all_ids.append(f"anki_{note['noteId']}")
                 all_docs.append(rich_doc)
+
+                stroke_raw = f.get('Stroke number', {}).get('value', '0')
                 all_metas.append({
                     "source": "anki",
                     "kanji": kanji,
-                    "strokes": f.get('Stroke number', {}).get('value', '0'),
+                    "strokes": clean_html(stroke_raw), # Simpan hanya angkanya
+                    "stroke_file": extract_svg_filename(stroke_raw), # Simpan referensi SVG
                     "tags": ", ".join(note['tags'])
                 })
             else:
@@ -80,20 +77,48 @@ def sync_anki_to_chroma(col_name):
         print(f"\n❌ ERROR Sinkronisasi: {e}")
 
 def build_rich_doc(fields_dict):
-    """Membangun dokumen hanya dari field yang memiliki isi."""
     lines = []
     labels = {
         'Kanji': 'Kanji',
         'Meanings': 'Arti',
         'Kunyomi': 'Kun',
         'Onyomi': 'On',
-        'Mnemonic': 'Cerita/Mnemonic',
-        'Words': 'Contoh'
+        'Mnemonic': 'Cerita/Mnemonic'
     }
     
+    # 1. Masukkan field standar
     for key, label in labels.items():
         val = clean_html(fields_dict.get(key, {}).get('value', ''))
-        if val: # Hanya tambahkan jika ada isinya
-            lines.append(f"{label}: {val}")
+        if val: lines.append(f"{label}: {val}")
+
+    # 2. Logika Khusus untuk Contoh (Words)
+    raw_words = clean_html(fields_dict.get('Words', {}).get('value', ''))
+    if raw_words:
+        # Split berdasarkan karakter pemisah umum: '/' atau '／' atau '・'
+        # Kita gunakan regex untuk menangani berbagai jenis garis miring
+        import re
+        examples = re.split(r'[/／・]', raw_words)
+        
+        # Bersihkan spasi dan masukkan jika tidak kosong
+        example_count = 1
+        for ex in examples:
+            clean_ex = ex.strip()
+            if clean_ex:
+                lines.append(f"Contoh {example_count}: {clean_ex}")
+                example_count += 1
             
     return "\n".join(lines)
+
+def test_numbering():
+    print("\n--- [TEST] VERIFIKASI PENOMORAN CONTOH ---")
+    
+    final_doc = build_rich_doc()
+    print("Hasil Konstruksi Dokumen:")
+    print("-" * 20)
+    print(final_doc)
+    print("-" * 20)
+    
+    if "Contoh 3:" in final_doc:
+        print("✅ Berhasil: Contoh dipisah menjadi Contoh 1, 2, dan 3.")
+    else:
+        print("❌ Gagal: Contoh masih menyatu.")
