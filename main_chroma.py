@@ -2,7 +2,8 @@ import db_config as db
 from utilities.insert_data import run_insert
 from utilities.delete_data import run_semantic_delete
 from utilities.update_data import run_update
-from utilities.view_data import run_view_data  # Import fungsi baru
+from utilities.view_data import run_view_data
+from utilities.anki_sync import sync_anki_to_chroma
 
 def semantic_search_flow(col_name):
     collection = db.get_collection(col_name)
@@ -47,10 +48,11 @@ def main():
         print("1. Tambah Collection Baru")
         print("2. Search In Collection (Quick Search)")
         print("3. Delete From Collection (Quick Delete)")
-        print("4. Lihat Seluruh Data (Tabel View)\n")  # Opsi baru di nomor 4
+        print("4. Lihat Seluruh Data (Tabel View)")
+        print("5. Sync Anki (Daily Practice)\n")
         
         # Opsi 5 ke atas diisi oleh koleksi yang ada (Offset menjadi 5)
-        offset = 5
+        offset = 6
         for i, name in enumerate(collections):
             print(f"{i + offset}. {name.replace('_', ' ').title()}")
             
@@ -70,10 +72,10 @@ def main():
                 print(f"✅ Collection '{new_name}' siap.")
                 input("Enter...")
 
-        elif choice in [2, 3, 4]:
+        elif choice in [2, 3, 4, 5]:
             db.clear_screen()
             # Mapping teks untuk menu pemilihan koleksi
-            action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW"}
+            action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW", 5: "SYNC ANKI"}
             target_action = action_map[choice]
             
             print(f"--- PILIH KOLEKSI UNTUK {target_action} ---")
@@ -84,7 +86,12 @@ def main():
                 selected = collections[int(idx)-1]
                 if choice == 2: semantic_search_flow(selected)
                 elif choice == 3: run_semantic_delete(selected)
-                elif choice == 4: run_view_data(selected) # Menjalankan view_data
+                elif choice == 4: run_view_data(selected)
+                elif choice == 5: sync_anki_to_chroma(selected)
+            # else:
+            #     print("⚠️ Pilihan koleksi tidak valid.")
+            
+            input("\nTekan Enter untuk kembali ke menu utama...")
 
         elif offset <= choice < exit_num:
             selected_col = collections[choice - offset]

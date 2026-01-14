@@ -34,8 +34,14 @@ def list_all_collections():
     return [c.name for c in client.list_collections()]
 
 def clear_screen():
-    # 1. Gunakan perintah sistem standar
-    os.system('cls' if os.name == 'nt' else 'clear')
-    # 2. Tambahkan ANSI Escape Code untuk memaksa kursor ke pojok kiri atas (H) 
-    # dan menghapus seluruh layar serta buffer (2J)
-    print("\033[H\033[2J", end="", flush=True)
+    # 1. Jalankan perintah sistem (cls untuk Windows, clear untuk Linux/Mac)
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')
+        
+    # 2. ANSI Escape Codes tingkat lanjut:
+    # \033[H  -> Pindah kursor ke posisi awal (baris 1, kolom 1)
+    # \033[2J -> Hapus semua karakter yang terlihat di layar
+    # \033[3J -> Hapus seluruh scrollback buffer (sejarah teks di atasnya)
+    print("\033[H\033[H\033[2J\033[3J", end="", flush=True)
