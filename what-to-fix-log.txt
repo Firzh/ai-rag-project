@@ -1,3 +1,4 @@
 pada koleksi japanese_leaning, bagian arti bisa menjadi list / memiliki arti dengan metode increment seperti contoh
 pada view_data.py untuk variable items_per_page masih belum digunakan
 pada koleksi japanese_leaning, bagian contoh ada bagian 'onyomi' (kunyomi) harus bisa mendeskripsikan
+apakah pada koleksi japanese_leaning udah ada fungsi untuk mengabaikan hal yang sudah ada ?
