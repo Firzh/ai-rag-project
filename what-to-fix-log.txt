@@ -1,7 +1,7 @@
-pada koleksi japanese_leaning, bagian arti bisa menjadi list / memiliki arti dengan metode increment seperti contoh
+pada koleksi japanese_learning, bagian arti bisa menjadi list / memiliki arti dengan metode increment seperti contoh
 pada view_data.py untuk variable items_per_page masih belum digunakan
-pada koleksi japanese_leaning, bagian contoh ada bagian 'onyomi' (kunyomi). pada anki onyomi sering kali dibarengi dengan (pembacaan dalam hiragana dalam kurung) seperti 大好き (だいすき), sehingga sebenarnya masih pada 1 makna / onyomi, namun pada koleksi malah dipisahkan karena pengaturan nya seperti itu
+pada koleksi japanese_learning, bagian contoh ada bagian 'onyomi' (kunyomi). pada anki onyomi sering kali dibarengi dengan (pembacaan dalam hiragana dalam kurung) seperti 大好き (だいすき), sehingga sebenarnya masih pada 1 makna / onyomi, namun pada koleksi malah dipisahkan karena pengaturan nya seperti itu
 pada anki juga biasanya ada kanji yang memiliki onyomi dan kunyomi lebih dari 1. perlu buat inkremen 1,2 dst. pada masing-masing onyomi dan kunyomi 
-apakah pada koleksi japanese_leaning udah ada fungsi untuk mengabaikan hal yang sudah ada ?
+apakah pada koleksi japanese_learning udah ada fungsi untuk mengabaikan hal yang sudah ada ?
 di deck anki yang aku pakai ada vocab, dan grammar juga. perlu menambahkan akan hal ini
 gimana kalau ada deck lain, apakah sudah terdeteksi ? kalau bellum perlu menambahkan untuk hal ini
