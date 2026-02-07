@@ -1,0 +1,55 @@
+Pencarian Semantik (Smart Search)	Menggunakan teknologi vector database (ChromaDB) dan model multilingual untuk mencari informasi berdasarkan makna, bukan sekadar kecocokan kata kunci.
+Sinkronisasi Anki Otomatis	        Terintegrasi langsung dengan AnkiConnect untuk menarik data kartu yang baru saja dipelajari dan menyimpannya sebagai memori jangka panjang di database AI.
+Pembersihan Data Otomatis	        Dilengkapi dengan pembersih HTML (Sanitizer) untuk memastikan data yang disimpan bersih dari kode-kode tampilan Anki yang berantakan.
+Rich Document Construction	        Mengubah field-field terpisah (Kanji, Arti, Contoh) menjadi satu narasi teks terstruktur untuk meningkatkan akurasi pemahaman konteks oleh AI.
+Manajemen Koleksi Fleksibel	        Mendukung pembuatan koleksi baru secara dinamis dan pengelolaan data (CRUD) secara manual maupun batch.
+Pusat Pengujian Terpadu	            Memiliki modul Central Testing untuk memverifikasi koneksi, logika ID, dan integritas model embedding sebelum digunakan dalam produksi.
+Pelacakan Metadata	                Menyimpan informasi tambahan seperti tingkat kematangan kartu (maturity), jumlah goresan kanji, dan tag untuk penyaringan data yang lebih mendalam.
+
+main_chroma.py
+- main()	                Titik masuk utama program yang menampilkan menu navigasi dan manajemen koleksi.
+- semantic_search_flow()	    Menjalankan alur pencarian semantik dalam koleksi tertentu dengan fitur navigasi hasil.
+- manage_specific_collection()	Menu khusus untuk mengelola satu koleksi (insert, search, view, update, delete).
+
+init_db.py
+- initialize_personal_db()	Melakukan inisialisasi awal database dengan membuat koleksi default: japanese_learning, game_dev, dan general.
+
+db_config.py
+- get_client()	            Membuat dan mengembalikan persistent client ChromaDB ke path ./db_personal.
+- get_collection()	        Mengambil atau membuat koleksi dengan model embedding multilingual paraphrase-multilingual-MiniLM-L12-v2.
+- list_all_collections()	Mengambil daftar nama seluruh koleksi yang tersedia di database.
+- clear_screen()	        Membersihkan tampilan terminal sesuai sistem operasi (Windows/Linux/Mac).
+
+insert_data.py
+- run_insert()	            Mengimpor data dari file Python eksternal di folder data/ secara dinamis ke dalam koleksi.
+
+update_data.py
+- run_update()            	Memperbarui konten dokumen yang ada berdasarkan ID yang dimasukkan pengguna.
+
+delete_data.py
+- run_semantic_delete()	    Mencari data secara semantik lalu menghapus data terpilih setelah konfirmasi pengguna.
+- run_clear_collection()	Menghapus seluruh isi (semua ID) dalam satu koleksi tertentu.
+- run_batch_delete()	    Mencari data mirip, menampilkan daftar 10 hasil, dan menghapus beberapa ID sekaligus berdasarkan input pengguna.
+
+view_data.py
+- run_view_data()         	Menampilkan seluruh data dalam koleksi menggunakan tampilan kartu (card view) yang mendukung navigasi per halaman.
+
+id_handler.py
+- check_id_exists()	        Memeriksa apakah suatu ID sudah terdaftar di koleksi dan mengembalikan dokumennya jika ada.
+- is_content_different()    Membandingkan konten lama dan baru untuk mendeteksi adanya perubahan data.
+- generate_kanji_id()	    Membuat format ID unik dan bersih untuk data Kanji (contoh: anki_123_水).
+
+anki_sync.py
+- invoke()	                Mengirim permintaan API ke AnkiConnect (localhost:8765).
+- sync_anki_to_chroma()	    Mensinkronisasi kartu Anki yang baru dipelajari hari ini ke dalam ChromaDB.
+- build_rich_doc()	        Menyusun ulang data field Anki menjadi dokumen teks terstruktur untuk optimasi pencarian semantik.
+
+sanitizer.py
+- html_cleaner()	        Menghapus tag HTML dan entitas teks, serta merapikan spasi atau baris baru.
+- extract_svg_filename()	Mengekstrak nama berkas .svg dari tag gambar HTML untuk referensi stroke kanji.
+
+central_testing.py
+- run_anki_logic_test()	    Menguji proses pembersihan data dan pembuatan ID tanpa menyimpannya ke database.
+- test_anki_connection()	Memastikan aplikasi Anki Desktop dan add-on AnkiConnect sedang aktif.
+- check_model()	            Memverifikasi apakah sistem menggunakan model embedding L12 Multilingual yang benar.
+- run_rich_doc_test_suite()	Menjalankan simulasi konversi berbagai skenario data (lengkap, kosong, atau live) ke format dokumen kaya.

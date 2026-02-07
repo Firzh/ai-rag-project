@@ -1,8 +1,8 @@
-nanori belum termasuk ke dalam pengambilan anki_sync.py
-pada anki juga biasanya ada kanji yang memiliki onyomi dan kunyomi lebih dari 1. perlu buat inkremen 1,2 dst. pada masing-masing onyomi dan kunyomi 
-apa ada tingkat kematangan kanji ?
-jika ada perlu dipertimbangkan penambahan
-apakah pada koleksi japanese_learning udah ada fungsi untuk mengabaikan hal yang sudah ada ?
-belum ada fungsi untuk migrasi perbaikan (menyusul ketika format label dan data yang di get sudah sesuai)
 di deck anki yang aku pakai ada vocab, dan grammar juga. perlu menambahkan akan hal ini (menyusul)
 gimana kalau ada deck lain, apakah sudah terdeteksi ? kalau bellum perlu menambahkan untuk hal ini
+perlu buat fungsi yang sesuai misal nanti pakai UI (window / web sebagai wrapper)
+
+kurang jelas:
+- kalau format beda apa akan ditimpa dengan data baru dari anki (misal ada kanji lama yang terulang lagi (anki memang mengulang kanji))
+- apa penimpaan data aman ? (ga ada data hilang / null)
+- apa tes migrasi bisa diubah menjadi fitur resmi di script anki_sync ?

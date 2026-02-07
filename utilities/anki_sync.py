@@ -1,3 +1,4 @@
+import re
 import requests
 import json
 import db_config as db
@@ -90,33 +91,53 @@ def sync_anki_to_chroma(col_name):
     except Exception as e:
         print(f"\n❌ ERROR Sinkronisasi: {e}")
 
+
 def build_rich_doc(fields_dict):
-
-    def add_incremental(field_name, label):
-        raw = fields_dict.get(field_name, {}).get('value', '')
-        clean = sanitizer.html_cleaner(raw, preserve_newline=True)
-        if clean:
-            items = clean.split('\n')
-            for i, item in enumerate(items, 1):
-                lines.append(f"{label} {i}: {item}")
-    
-    def add_non_incremental(field_name, label):
-        item = sanitizer.html_cleaner(fields_dict.get(field_name, {}).get('value', ''))
-        if item: lines.append(f"{label}: {item}")
-
     lines = []
     
-    # 1. Kanji
+    # Fungsi pembantu untuk field bernomor (Arti, Bacaan, Contoh)
+    def add_incremental(field_name, label, split_regex=None):
+        # Ambil field, jika tidak ada/hilang, gunakan string 'null'
+        field_obj = fields_dict.get(field_name)
+        raw = field_obj.get('value', 'null') if field_obj else 'null'
+        
+        # Bersihkan HTML dengan menjaga baris baru (\n)
+        clean = sanitizer.html_cleaner(raw, preserve_newline=True)
+        
+        # Jika hasil pembersihan kosong, tampilkan index 1 sebagai 'null'
+        if not clean or clean == 'null':
+            lines.append(f"{label} 1: null")
+            return
+
+        import re
+        # Gunakan regex split jika ada (untuk Onyomi/Kunyomi), jika tidak gunakan newline
+        items = re.split(split_regex, clean) if split_regex else clean.split('\n')
+        
+        count = 1
+        for item in items:
+            text = item.strip()
+            if text:
+                lines.append(f"{label} {count}: {text}")
+                count += 1
+
+    def add_non_incremental(field_name, label):
+        field_obj = fields_dict.get(field_name)
+        val = field_obj.get('value', 'null') if field_obj else 'null'
+        clean = sanitizer.html_cleaner(val)
+        lines.append(f"{label}: {clean if clean else 'null'}")
+
+    # --- EKSEKUSI STRUKTUR ---
     add_non_incremental('Kanji', 'Kanji')
-
-    # 2. Field dengan Increment List
     add_incremental('Meanings', 'Arti')
-    add_incremental('Kunyomi', 'Kunyomi')
-    add_incremental('Onyomi', 'Onyomi')
-    add_incremental('Nanori', 'Nanori')
+    
+    # Onyomi, Kunyomi, Nanori di-split berdasarkan koma atau baris baru
+    reading_split = r'[\n,、]' 
+    add_incremental('Kunyomi', 'Kunyomi', split_regex=reading_split)
+    add_incremental('Onyomi', 'Onyomi', split_regex=reading_split)
+    add_incremental('Nanori', 'Nanori', split_regex=reading_split)
+    
+    # Contoh di-split berdasarkan baris untuk menjaga "paket" box Anki
     add_incremental('Words', 'Contoh')
-
-    # 5. Mnemonic
     add_non_incremental('Mnemonic', 'Cerita/Mnemonic')
 
     return "\n".join(lines)

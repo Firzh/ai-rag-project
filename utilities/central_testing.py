@@ -77,6 +77,57 @@ def check_model():
         else:
             print("⚠️ PERINGATAN: Sistem terdeteksi menggunakan model lain.")
 
+
+def run_rich_doc_test_suite():
+    print("\n" + "="*50)
+    print("      UNIT TEST: RICH DOCUMENT TRANSFORMATION")
+    print("="*50)
+
+    # SKENARIO 1: DATA LENGKAP & KOMPLEKS (Menguji Incremental)
+    print("\n[SKENARIO 1] DATA KOMPLEKS (Multi-Reading & Meaning)")
+    complex_data = {
+        'Kanji': {'value': '一'},
+        'Meanings': {'value': 'one; one radical (no.1)'},
+        'Onyomi': {'value': 'イチ, イツ'},
+        'Kunyomi': {'value': 'ひと, ひと.つ'},
+        'Nanori': {'value': 'い, かず'},
+        'Words': {'value': '一緒に / いっしょに - together\n一度 / いchido - once'},
+        'Mnemonic': {'value': 'A simple horizontal line.'}
+    }
+    print("-" * 30)
+    print(anki.build_rich_doc(complex_data))
+    print("-" * 30)
+
+    # SKENARIO 2: DATA KOSONG (Menguji Null Handling)
+    print("\n[SKENARIO 2] DATA KOSONG (Testing 'null' strings)")
+    empty_data = {
+        'Kanji': {'value': ''},
+        'Meanings': {'value': ''}, # Field ada tapi kosong
+        # Field Nanori sengaja tidak dimasukkan sama sekali
+    }
+    print("-" * 30)
+    print(anki.build_rich_doc(empty_data))
+    print("-" * 30)
+
+    # SKENARIO 3: LIVE DATA (Jika Anki Terhubung)
+    print("\n[SKENARIO 3] LIVE DATA (Hasil Sync Terbaru)")
+    try:
+        note_ids = anki.invoke("findNotes", query="rated:1")['result']
+        if note_ids:
+            note = anki.invoke("notesInfo", notes=[note_ids[0]])['result'][0]
+            print(f"ID Kartu: {note['noteId']}")
+            print("-" * 30)
+            print(anki.build_rich_doc(note['fields']))
+        else:
+            print("ℹ️ Lewati: Tidak ada sesi latihan Anki hari ini.")
+    except:
+        print("ℹ️ Lewati: Anki Desktop tidak terdeteksi.")
+    
+    print("\n" + "="*50)
+    print("✅ Pengujian Selesai. Periksa format di atas.")
+    print("="*50)
+
+
 def main_test():
     while True:
         db.clear_screen()
@@ -85,6 +136,7 @@ def main_test():
         print("2. Uji Sanitasi & Logic ID Anki (Daily)")
         print("3. Cek Dimensi Vektor (Verify L12)")
         print("4. Cek Numbering ID Unik")
+        print("5. Simulasi Migrasi (Test Rich Doc Baru)")
         print("0. Kembali ke Menu Utama")
         
         choice = input("\nPilih Uji: ")
@@ -93,6 +145,7 @@ def main_test():
         elif choice == "2": run_anki_logic_test()
         elif choice == "3": check_model()
         elif choice == "4": test_increment()
+        elif choice == "5": run_rich_doc_test_suite()
         elif choice == "0": break
         
         input("\nTekan Enter untuk lanjut...")
