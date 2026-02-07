@@ -14,34 +14,37 @@ def run_view_data(col_name):
 
     while True:
         db.clear_screen()
+        # Ambil potongan data berdasarkan index dan page size
+        end_index = min(current_index + items_per_page, total_data)
         print(f"=== BROWSER DATA: [{col_name.upper()}] ===")
         print(f"Menampilkan {current_index + 1} dari {total_data} data\n")
         
         # Ambil data spesifik
-        id_val = results['ids'][current_index]
-        doc_val = results['documents'][current_index]
-        meta_val = results['metadatas'][current_index]
+        for idx in range(current_index, end_index):
+            id_val = results['ids'][idx]
+            doc_val = results['documents'][idx]
+            meta_val = results['metadatas'][idx]
 
-        # Tampilan ala Kartu (Simple UI)
-        print(f"┏━━━━ ID: {id_val} ━━━━━━━━━━━━━━━━━━━━━━━━")
-        print(f"┃")
-        
-        # Cetak isi dokumen baris per baris
-        for line in doc_val.split('\n'):
-            print(f"┃  {line}")
+            # Tampilan ala Kartu (Simple UI)
+            print(f"┏━━━━ ID: {id_val} ━━━━━━━━━━━━━━━━━━━━━━━━")
+            print(f"┃")
             
-        print(f"┃")
-        print(f"┣━━━━ METADATA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        for key, val in meta_val.items():
-            print(f"┃  {key}: {val}")
-        print(f"┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            # Cetak isi dokumen baris per baris
+            for line in doc_val.split('\n'):
+                print(f"┃  {line}")
+                
+            print(f"┃")
+            print(f"┣━━━━ METADATA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            for key, val in meta_val.items():
+                print(f"┃  {key}: {val}")
+            print(f"┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        print("\nNavigasi: [n] Next | [p] Previous | [q] Keluar")
-        cmd = input("Pilih: ").lower()
+            print("\nNavigasi: [n] Next | [p] Previous | [q] Keluar")
+            cmd = input("Pilih: ").lower()
 
-        if cmd == 'n':
-            if current_index + 1 < total_data: current_index += 1
-        elif cmd == 'p':
-            if current_index > 0: current_index -= 1
-        elif cmd == 'q':
-            break
+            if cmd == 'n':
+                if current_index + 1 < total_data: current_index += 1
+            elif cmd == 'p':
+                if current_index > 0: current_index -= 1
+            elif cmd == 'q':
+                break

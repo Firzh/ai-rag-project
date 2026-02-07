@@ -1,17 +1,27 @@
 import re
 
-def clean_html(raw_html):
+def clean_html(raw_html, preserve_newline = False):
     """Menghapus tag HTML dan merapikan spasi."""
-    if not raw_html:
-        return ""
+
+    if not raw_html: return ""
+
+    # Ganti tag blok dengan newline jika kita ingin menjaga struktur baris
+    if preserve_newline:
+        raw_html = re.sub(r'</div>|</li>|</p>|</br\s*/?>', '\n', raw_html)
+
     # Hapus tag HTML
     clean = re.sub(r'<.*?>', '', raw_html)
     # Hapus entitas seperti &nbsp;
     clean = re.sub(r'&[^;]+;', ' ', clean)
-    # Ubah multiple newline/spasi menjadi satu spasi saja
-    clean = " ".join(clean.split())
-    return clean.strip()
 
+    if preserve_newline:
+        # Bersihkan spasi di tiap baris, tapi pertahankan barisnya
+        lines = [line.strip() for line in clean.split('\n') if line.strip()]
+        return "\n".join(lines)
+    else:
+        # Normalisasi spasi menjadi satu baris (untuk field tunggal)
+        return " ".join(clean.split()).strip()
+    
 def extract_svg_filename(html_string):
     # Mencari nama file di dalam tag <img src="xxx.svg">
     match = re.search(r'src="([^"]+\.svg)"', html_string)

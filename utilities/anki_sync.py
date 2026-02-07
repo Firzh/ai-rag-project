@@ -78,36 +78,39 @@ def sync_anki_to_chroma(col_name):
 
 def build_rich_doc(fields_dict):
     lines = []
-    labels = {
-        'Kanji': 'Kanji',
-        'Meanings': 'Arti',
-        'Kunyomi': 'Kun',
-        'Onyomi': 'On',
-        'Mnemonic': 'Cerita/Mnemonic'
-    }
     
-    # 1. Masukkan field standar
-    for key, label in labels.items():
-        val = clean_html(fields_dict.get(key, {}).get('value', ''))
-        if val: lines.append(f"{label}: {val}")
+    # 1. Kanji (Label Eksplisit)
+    kanji = clean_html(fields_dict.get('Kanji', {}).get('value', ''))
+    if kanji: lines.append(f"Kanji: {kanji}")
 
-    # 2. Logika Khusus untuk Contoh (Words)
-    raw_words = clean_html(fields_dict.get('Words', {}).get('value', ''))
-    if raw_words:
-        # Split berdasarkan karakter pemisah umum: '/' atau '／' atau '・'
-        # Kita gunakan regex untuk menangani berbagai jenis garis miring
-        import re
-        examples = re.split(r'[/／・]', raw_words)
-        
-        # Bersihkan spasi dan masukkan jika tidak kosong
-        example_count = 1
-        for ex in examples:
-            clean_ex = ex.strip()
-            if clean_ex:
-                lines.append(f"Contoh {example_count}: {clean_ex}")
-                example_count += 1
-            
-    return "\n".join(lines)
+    # 2. Arti dengan Increment List
+    raw_meanings = fields_dict.get('Meanings', {}).get('value', '')
+
+    # Gunakan preserve_newline=True agar <div> terpisah jadi baris baru
+    clean_meanings = clean_html(raw_meanings, preserve_newline=True)
+    if clean_meanings:
+        meaing_list = clean_meanings.split('\n')
+        for i, arti in enumerate(meaing_list, 1):
+            lines.append(f"Arti {i}: {arti}")
+    
+    # 3. Bacaan Deskriptif untuk AI
+    kun = clean_html(fields_dict.get('Kunyomi', {}).get('value', ''))
+    on = clean_html(fields_dict.get('Onyomi', {}).get('value', ''))
+    if kun: lines.append(f"Kunyomi (Reading Jepang): {kun}")
+    if on: lines.append(f"Onyomi (Reading Cina): {on}")
+
+    # 4. Contoh Kotoba
+    raw_words = fields_dict.get('Words', {}).get('value', '')
+    clean_words = clean_html(raw_words, preserve_newline=True)
+    if clean_words:
+        words_packages = clean_words.split('\n')
+        for i, pkg in enumerate(words_packages, 1):
+            # Di sini satu baris sudah berisi "Kanji / Reading - Meaning"
+            lines.append(f"Contoh: {i}, {pkg}")
+
+    # 5. Mnemonic
+    mnem = clean_html(fields_dict.get('Mnemonic', {}).get('value', ''))
+    if mnem: lines.append(f"Cerita/Mnemonic: {mnem}")
 
 def test_numbering():
     print("\n--- [TEST] VERIFIKASI PENOMORAN CONTOH ---")
