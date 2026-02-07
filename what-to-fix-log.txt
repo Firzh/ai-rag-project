@@ -5,3 +5,4 @@ pada anki juga biasanya ada kanji yang memiliki onyomi dan kunyomi lebih dari 1.
 apakah pada koleksi japanese_learning udah ada fungsi untuk mengabaikan hal yang sudah ada ?
 di deck anki yang aku pakai ada vocab, dan grammar juga. perlu menambahkan akan hal ini
 gimana kalau ada deck lain, apakah sudah terdeteksi ? kalau bellum perlu menambahkan untuk hal ini
+nanori belum termasuk ke dalam pengambilan anki_sync.py
