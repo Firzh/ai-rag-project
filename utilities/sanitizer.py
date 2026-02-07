@@ -1,6 +1,6 @@
 import re
 
-def clean_html(raw_html, preserve_newline = False):
+def html_cleaner(raw_html, preserve_newline = False):
     """Menghapus tag HTML dan merapikan spasi."""
 
     if not raw_html: return ""

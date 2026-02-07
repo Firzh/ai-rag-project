@@ -1,8 +1,8 @@
 import requests
 import json
 import db_config as db
-from utilities.sanitizer import clean_html
-from utilities.sanitizer import extract_svg_filename
+import utilities.sanitizer as sanitizer
+import utilities.id_handler as id_handler
 
 ANKI_URL = "http://localhost:8765"
 
@@ -22,54 +22,68 @@ def sync_anki_to_chroma(col_name):
 
         # 3. Ambil detail konten kartu
         notes_info = invoke("notesInfo", notes=note_ids)['result']
+        
+        # Ambil semua card_ids untuk batch processing maturity
+        all_card_ids = []
+        for note in notes_info:
+            all_card_ids.extend(note['cards'])
+        cards_info = invoke("cardsInfo", cards = all_card_ids)['result']
+        card_map = {cards['cardId']: cards for cards in cards_info}
+
         all_ids, all_docs, all_metas = [], [], []
         
         for note in notes_info:
             # DEBUG: Ambil semua nama field yang tersedia di kartu ini
-            available_fields = list(note['fields'].keys())
+            # available_fields = list(note['fields'].keys())
 
             f = note['fields']
 
-            # 1. Ekstraksi field berdasarkan hasil debug
-            kanji = clean_html(f.get('Kanji', {}).get('value', ''))
-            meanings = clean_html(f.get('Meanings', {}).get('value', ''))
-            on_reading = clean_html(f.get('Onyomi', {}).get('value', ''))
-            kun_reading = clean_html(f.get('Kunyomi', {}).get('value', ''))
-            mnemonic = clean_html(f.get('Mnemonic', {}).get('value', ''))
-            words = clean_html(f.get('Words', {}).get('value', ''))
-
-            # 2. Bangun Document "Rich Context" (Agar Semantic Search Pintar)
-            # Kita buat format yang rapi agar model L12 paham hubungannya
-            rich_doc = build_rich_doc(f)
-            
-            # 3. Masukkan ke List jika Kanji dan Arti ada
+            # Ekstraksi minimal untuk validasi dan metadata
+            kanji = sanitizer.html_cleaner(f.get('Kanji', {}).get('value', ''))
+            meanings = sanitizer.html_cleaner(f.get('Meanings', {}).get('value', ''))
+          
             if kanji and meanings:
-                all_ids.append(f"anki_{note['noteId']}")
-                all_docs.append(rich_doc)
 
-                stroke_raw = f.get('Stroke number', {}).get('value', '0')
-                all_metas.append({
-                    "source": "anki",
-                    "kanji": kanji,
-                    "strokes": clean_html(stroke_raw), # Simpan hanya angkanya
-                    "stroke_file": extract_svg_filename(stroke_raw), # Simpan referensi SVG
-                    "tags": ", ".join(note['tags'])
-                })
+                # Document "Rich Context" (Agar Semantic Search Pintar)
+                new_doc = build_rich_doc(f)
+                target_id = f"anki_{note['noteId']}"
+
+                # Cek id dan perbandingan isi
+                existing_doc = id_handler.check_id_exists(col_name, target_id)
+
+                if id_handler.is_content_different(existing_doc, new_doc):
+                    # Hitung Kematangan (Maturity)
+                    # Anki menggunakan 'ivl' (interval). ivl >= 21 hari dianggap "Mature"
+                    note_cards = [card_map.get(cid) for cid in note['cards'] if card_map.get(cid)]
+                    max_ivl = max([c.get('ivl', 0) for c in note_cards]) if note_cards else 0 
+
+                    all_ids.append(target_id)
+                    all_docs.append(new_doc)
+
+                    stroke_raw = f.get('Stroke number', {}).get('value', '0')
+                    all_metas.append({
+                        "source": "anki",
+                        "kanji": kanji,
+                        "maturity_interval": max_ivl,
+                        "status": "Mature" if max_ivl >= 21 else "Young/Learning",
+                        "strokes": sanitizer.html_cleaner(stroke_raw),                # Simpan hanya angkanya
+                        "stroke_file": sanitizer.extract_svg_filename(stroke_raw),    # Simpan referensi SVG
+                        "tags": ", ".join(note['tags'])
+                    })
+                    update_count += 1
+                else:
+                    skip_count += 1
             else:
                 # Log jika field tidak ditemukan
                 print(f"⚠️ Warning: Kartu ID {note['noteId']} dilewati. ")
-                print(f"   Field yang tersedia: {available_fields}")
+                # print(f"   Field yang tersedia: {available_fields}")
 
-        if not all_ids:
-            print("\n⚠️ GAGAL: Kartu terdeteksi tapi field tidak sesuai template.")
-            return
-        
-        # Upsert ke ChromaDB menggunakan model L12 Multilingual
-        collection = db.get_collection(col_name)
-        collection.upsert(ids=all_ids, documents=all_docs, metadatas=all_metas)
-        
-        # db.clear_screen()
-        print(f"✅ BERHASIL: {len(all_ids)} kartu Anki telah disinkronkan ke [{col_name.upper()}]")
+        if all_ids:
+            collection = db.get_collection(col_name)
+            collection.upsert(ids=all_ids, documents=all_docs, metadatas=all_metas)
+            print(f"✅ SYNC SELESAI: {update_count} data diupdate, {skip_count} data identik diabaikan.")
+        else:
+            print(f"ℹ️ Semua data ({skip_count} kartu) sudah up-to-date di [{col_name.upper()}].")
         
     except requests.exceptions.ConnectionError:
         print("\n❌ ERROR: Anki tidak terdeteksi. Pastikan aplikasi Anki sudah terbuka.")
@@ -77,51 +91,32 @@ def sync_anki_to_chroma(col_name):
         print(f"\n❌ ERROR Sinkronisasi: {e}")
 
 def build_rich_doc(fields_dict):
+
+    def add_incremental(field_name, label):
+        raw = fields_dict.get(field_name, {}).get('value', '')
+        clean = sanitizer.html_cleaner(raw, preserve_newline=True)
+        if clean:
+            items = clean.split('\n')
+            for i, item in enumerate(items, 1):
+                lines.append(f"{label} {i}: {item}")
+    
+    def add_non_incremental(field_name, label):
+        item = sanitizer.html_cleaner(fields_dict.get(field_name, {}).get('value', ''))
+        if item: lines.append(f"{label}: {item}")
+
     lines = []
     
-    # 1. Kanji (Label Eksplisit)
-    kanji = clean_html(fields_dict.get('Kanji', {}).get('value', ''))
-    if kanji: lines.append(f"Kanji: {kanji}")
+    # 1. Kanji
+    add_non_incremental('Kanji', 'Kanji')
 
-    # 2. Arti dengan Increment List
-    raw_meanings = fields_dict.get('Meanings', {}).get('value', '')
-
-    # Gunakan preserve_newline=True agar <div> terpisah jadi baris baru
-    clean_meanings = clean_html(raw_meanings, preserve_newline=True)
-    if clean_meanings:
-        meaing_list = clean_meanings.split('\n')
-        for i, arti in enumerate(meaing_list, 1):
-            lines.append(f"Arti {i}: {arti}")
-    
-    # 3. Bacaan Deskriptif untuk AI
-    kun = clean_html(fields_dict.get('Kunyomi', {}).get('value', ''))
-    on = clean_html(fields_dict.get('Onyomi', {}).get('value', ''))
-    if kun: lines.append(f"Kunyomi (Reading Jepang): {kun}")
-    if on: lines.append(f"Onyomi (Reading Cina): {on}")
-
-    # 4. Contoh Kotoba
-    raw_words = fields_dict.get('Words', {}).get('value', '')
-    clean_words = clean_html(raw_words, preserve_newline=True)
-    if clean_words:
-        words_packages = clean_words.split('\n')
-        for i, pkg in enumerate(words_packages, 1):
-            # Di sini satu baris sudah berisi "Kanji / Reading - Meaning"
-            lines.append(f"Contoh: {i}, {pkg}")
+    # 2. Field dengan Increment List
+    add_incremental('Meanings', 'Arti')
+    add_incremental('Kunyomi', 'Kunyomi')
+    add_incremental('Onyomi', 'Onyomi')
+    add_incremental('Nanori', 'Nanori')
+    add_incremental('Words', 'Contoh')
 
     # 5. Mnemonic
-    mnem = clean_html(fields_dict.get('Mnemonic', {}).get('value', ''))
-    if mnem: lines.append(f"Cerita/Mnemonic: {mnem}")
+    add_non_incremental('Mnemonic', 'Cerita/Mnemonic')
 
-def test_numbering():
-    print("\n--- [TEST] VERIFIKASI PENOMORAN CONTOH ---")
-    
-    final_doc = build_rich_doc()
-    print("Hasil Konstruksi Dokumen:")
-    print("-" * 20)
-    print(final_doc)
-    print("-" * 20)
-    
-    if "Contoh 3:" in final_doc:
-        print("✅ Berhasil: Contoh dipisah menjadi Contoh 1, 2, dan 3.")
-    else:
-        print("❌ Gagal: Contoh masih menyatu.")
+    return "\n".join(lines)

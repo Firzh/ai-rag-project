@@ -1,8 +1,7 @@
 import db_config as db
 import utilities.anki_sync as anki
-from utilities.id_handler import check_id_exists, generate_kanji_id
-from utilities.sanitizer import clean_html
-from utilities.check_model import check_model
+import utilities.id_handler as id_handler
+import utilities.sanitizer as sanitizer
 
 def run_anki_logic_test():
     """Uji alur sanitasi dan pembuatan ID tanpa memasukkan ke DB."""
@@ -19,11 +18,11 @@ def run_anki_logic_test():
 
         # 2. Test Sanitizer
         raw_meaning = f.get('Meanings', {}).get('value', '')
-        clean_meaning = clean_html(raw_meaning)
+        clean_meaning = sanitizer.html_cleaner(raw_meaning)
         
         # 3. Test ID Generator
-        kanji = clean_html(f.get('Kanji', {}).get('value', 'unknown'))
-        generated_id = generate_kanji_id(note['noteId'], kanji)
+        kanji = sanitizer.html_cleaner(f.get('Kanji', {}).get('value', 'unknown'))
+        generated_id = id_handler.generate_kanji_id(note['noteId'], kanji)
 
         # 4. Display Results
         print(f"RAW HTML   : {raw_meaning[:50]}...")
@@ -31,7 +30,7 @@ def run_anki_logic_test():
         print(f"GEN-ID     : {generated_id}")
         
         # 5. Check Duplicate
-        exists = check_id_exists("japanese_learning", generated_id)
+        exists = id_handler.check_id_exists("japanese_learning", generated_id)
         print(f"DUPLIKAT?  : {'🚩 YA' if exists else '✅ AMAN (Belum ada)'}")
 
     except Exception as e:
@@ -45,32 +44,38 @@ def test_anki_connection():
     except:
         print("❌ GAGAL: Anki Desktop belum dibuka atau Add-on tidak aktif.")
 
-# def test_anki_sanitization_preview():
-#     print("\n--- [TEST 2] Preview Sanitasi Data Anki (Dry Run) ---")
-#     try:
-#         # Ambil 1 kartu secara acak untuk preview
-#         note_ids = anki.invoke("findNotes", query="rated:1")['result']
-#         if not note_ids:
-#             print("ℹ️ Tidak ada data latihan hari ini untuk diuji.")
-#             return
+def test_increment():
+    print("\n--- [TEST] VERIFIKASI PENOMORAN CONTOH ---")
+    
+    final_doc = anki.build_rich_doc()
+    print("Hasil Konstruksi Dokumen:")
+    print("-" * 20)
+    print(final_doc)
+    print("-" * 20)
+    
+    if "Contoh 3:" in final_doc:
+        print("✅ Berhasil: Contoh dipisah menjadi Contoh 1, 2, dan 3.")
+    else:
+        print("❌ Gagal: Contoh masih menyatu.")
 
-#         note = anki.invoke("notesInfo", notes=[note_ids[0]])['result'][0]
+def check_model():
+# Ambil koleksi
+    collection = db.get_collection("japanese_learning")
+
+    # Akses internal embedding function
+    ef = collection._embedding_function
+
+    # Cek nama model yang terdaftar di dalam objek SentenceTransformer
+    if hasattr(ef, 'models'): # Jika menggunakan SentenceTransformerEmbeddingFunction
+        # Biasanya model tersimpan di urutan pertama dalam list modules
+        model_name = ef.model_name
+        print(f"--- Verifikasi Engine ---")
+        print(f"Model Name Terdeteksi: {model_name}")
         
-#         print(f"ID Kartu: {note['noteId']}")
-#         print("-" * 30)
-#         print("RAW DATA (Sample Field 'Meanings'):")
-#         print(note['fields'].get('Meanings', {}).get('value', 'KOSONG'))
-        
-#         print("\nCLEAN DATA (Hasil Sanitasi):")
-#         print(clean_html(note['fields'].get('Meanings', {}).get('value', '')))
-        
-#         print("\nFINAL DOCUMENT STRUCTURE:")
-#         # Menggunakan logika build_rich_doc dari anki_sync
-#         print(anki.build_rich_doc(note['fields']))
-#         print("-" * 30)
-        
-#     except Exception as e:
-#         print(f"❌ Error saat uji data: {e}")
+        if "L12" in model_name:
+            print("✅ KONFIRMASI: Sistem menggunakan versi 12-Layer (Multilingual).")
+        else:
+            print("⚠️ PERINGATAN: Sistem terdeteksi menggunakan model lain.")
 
 def main_test():
     while True:
@@ -87,7 +92,7 @@ def main_test():
         if choice == "1": test_anki_connection()
         elif choice == "2": run_anki_logic_test()
         elif choice == "3": check_model()
-        elif choice == "4":anki.test_numbering()
+        elif choice == "4": test_increment()
         elif choice == "0": break
         
         input("\nTekan Enter untuk lanjut...")
