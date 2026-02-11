@@ -1,8 +1,8 @@
 import db_config as db
-import utilities.delete_data as delete_util
+import utilities.update_data as update
+import utilities.delete_data as delete
 from utilities.central_testing import main_test
 from utilities.insert_data import run_insert
-from utilities.update_data import run_update
 from utilities.view_data import run_view_data
 from utilities.anki_sync import sync_anki_to_chroma
 
@@ -47,11 +47,11 @@ def main():
         
         print("============= Chroma DB Dynamic Command Center =============")
         print("1. Tambah Collection Baru")
-        print("2. Search In Collection (Quick Search)")
-        print("3. Delete From Collection (Quick Delete)")
-        print("4. Lihat Seluruh Data (Tabel View)")
-        print("5. Sync Anki (Daily Practice)")
-        print("6. Central Testing & Debug Center\n")
+        print("2. Search In Collection")
+        print("3. Delete From Collection")
+        print("4. Collection Tabel View")
+        print("5. Sync Anki")
+        print("6. Central Testing\n")
         
         # Opsi 5 ke atas diisi oleh koleksi yang ada (Offset menjadi 5)
         offset = 7
@@ -87,12 +87,12 @@ def main():
             if idx.isdigit() and 0 < int(idx) <= len(collections):
                 selected = collections[int(idx)-1]
                 if choice == 2: semantic_search_flow(selected)
-                elif choice == 3: delete_util.run_semantic_delete(selected)
+                elif choice == 3: delete.main_delete(selected)
                 elif choice == 4: run_view_data(selected)
                 elif choice == 5: sync_anki_to_chroma(selected)
                 elif choice == 6: main_test()
-            # else:
-            #     print("⚠️ Pilihan koleksi tidak valid.")
+            else:
+                print("⚠️ Pilihan koleksi tidak valid.")
             
             input("\nTekan Enter untuk kembali ke menu utama...")
 
@@ -108,14 +108,13 @@ def manage_specific_collection(col_name):
     while True:
         db.clear_screen()
         print(f"=== MANAGE: [{col_name.upper()}] ===")
-        print("1. Insert/Sync Data")
+        print("1. Insert Data")
         print("2. Search Semantic")
-        print("3. Lihat Seluruh Data (Tabel View)") # Juga ditambahkan di sub-menu agar konsisten
+        print("3. Lihat Seluruh Data (Tabel View)")
         print("4. Update Manual")
-        print("5. Delete Semantic")
-        print("6. Batch Delete (Pilih 10)") 
-        print("7. Hapus Seluruh Isi Koleksi")
-        print("8. Kembali")
+        print("5. Delete")
+
+        print("6. Kembali")
         
         p = input("\nPilih: ")
         if p == "1":
@@ -125,14 +124,10 @@ def manage_specific_collection(col_name):
         elif p == "3":
             run_view_data(col_name)
         elif p == "4":
-            run_update(col_name)
+            update.main_update(col_name)
         elif p == "5":
-            delete_util.run_semantic_delete(col_name)
+            delete.main_delete(col_name)
         elif p == "6":
-            delete_util.run_batch_delete(col_name)
-        elif p == "7":
-            delete_util.run_clear_collection(col_name)
-        elif p == "8":
             break
         input("\nTekan Enter...")
 

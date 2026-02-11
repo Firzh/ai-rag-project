@@ -79,6 +79,7 @@ def check_model():
 
 
 def run_rich_doc_test_suite():
+    db.clear_screen
     print("\n" + "="*50)
     print("      UNIT TEST: RICH DOCUMENT TRANSFORMATION")
     print("="*50)
@@ -102,26 +103,30 @@ def run_rich_doc_test_suite():
     print("\n[SKENARIO 2] DATA KOSONG (Testing 'null' strings)")
     empty_data = {
         'Kanji': {'value': ''},
-        'Meanings': {'value': ''}, # Field ada tapi kosong
-        # Field Nanori sengaja tidak dimasukkan sama sekali
+        'Meanings': {'value': ''}, 
     }
     print("-" * 30)
     print(anki.build_rich_doc(empty_data))
     print("-" * 30)
 
-    # SKENARIO 3: LIVE DATA (Jika Anki Terhubung)
-    print("\n[SKENARIO 3] LIVE DATA (Hasil Sync Terbaru)")
+    # SKENARIO 3: DATA DARI DATABASE (Existing Records)
+    # Digunakan untuk memantau data lama sebelum migrasi ke format baru
+    print("\n[SKENARIO 3] DATA DARI DATABASE (Sampel Data Terimpan)")
     try:
-        note_ids = anki.invoke("findNotes", query="rated:1")['result']
-        if note_ids:
-            note = anki.invoke("notesInfo", notes=[note_ids[0]])['result'][0]
-            print(f"ID Kartu: {note['noteId']}")
+        collection = db.get_collection("japanese_learning")
+        res = collection.get(limit=1)
+        
+        if res['ids']:
+            print(f"ID Database: {res['ids'][0]}")
             print("-" * 30)
-            print(anki.build_rich_doc(note['fields']))
+            print("Konten (Format Saat Ini):")
+            print(res['documents'][0])
+            print("-" * 30)
+            print(f"Metadata: {res['metadatas'][0]}")
         else:
-            print("ℹ️ Lewati: Tidak ada sesi latihan Anki hari ini.")
-    except:
-        print("ℹ️ Lewati: Anki Desktop tidak terdeteksi.")
+            print("ℹ️ Lewati: Koleksi database 'japanese_learning' masih kosong.")
+    except Exception as e:
+        print(f"ℹ️ Gagal mengambil data database: {e}")
     
     print("\n" + "="*50)
     print("✅ Pengujian Selesai. Periksa format di atas.")

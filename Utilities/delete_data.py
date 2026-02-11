@@ -1,7 +1,7 @@
-from db_config import get_collection, clear_screen
+import db_config as db
 
 def run_semantic_delete(col_name):
-    collection = get_collection(col_name)
+    collection = db.get_collection(col_name)
     query_text = input("Cari data yang ingin dihapus: ")
     
     # Ambil 5 hasil terdekat untuk fitur 'Next'
@@ -17,7 +17,7 @@ def run_semantic_delete(col_name):
         target_doc = results['documents'][0][index]
         target_meta = results['metadatas'][0][index]
 
-        clear_screen()
+        db.clear_screen()
         print(f"--- KONFIRMASI HAPUS [{col_name.upper()}] (Hasil ke-{index+1}) ---")
         print(f"ID       : {target_id}")
         print(f"Konten   : {target_doc}")
@@ -29,7 +29,7 @@ def run_semantic_delete(col_name):
 
         if choice == 'y':
             collection.delete(ids=[target_id])
-            clear_screen()
+            db.clear_screen()
             print(f"🗑️ BERHASIL: {target_id} dihapus.")
             break
         elif choice == 'n':
@@ -43,7 +43,7 @@ def run_semantic_delete(col_name):
 
 def run_clear_collection(col_name):
     """Menghapus seluruh data dalam satu koleksi."""
-    collection = get_collection(col_name)
+    collection = db.get_collection(col_name)
     count = collection.count()
     
     if count == 0:
@@ -63,7 +63,7 @@ def run_clear_collection(col_name):
 
 def run_batch_delete(col_name):
     """Mencari 10 data mirip dan memilih yang ingin dihapus."""
-    collection = get_collection(col_name)
+    collection = db.get_collection(col_name)
     query = input("Cari hal mirip yang ingin di-batch delete: ")
     res = collection.query(query_texts=[query], n_results=10)
     
@@ -92,3 +92,24 @@ def run_batch_delete(col_name):
             print(f"🗑️ BERHASIL: {len(target_ids)} data dihapus.")
     except Exception as e:
         print(f"❌ Input tidak valid: {e}")
+
+def main_delete(col_name):
+    while True:
+        db.clear_screen()
+        print("=== UPDATE CENTER ===")
+        print("1. Semantic Delete")
+        print("2. Collection Delete")
+        print("3. Batch Delete (Pilih 10)")
+        print("0. Kembali ke Menu Utama")
+        
+        choice = input("\nPilih Uji: ")
+        
+        if choice == "1": run_semantic_delete(col_name)
+        elif choice == "2": run_clear_collection(col_name)
+        elif choice == "3": run_batch_delete(col_name)
+        elif choice == "0": break
+        
+        input("\nTekan Enter untuk lanjut...")
+
+if __name__ == "__main__":
+    main_delete()
