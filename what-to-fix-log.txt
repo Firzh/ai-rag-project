@@ -1,8 +1,37 @@
-di deck anki yang aku pakai ada vocab, dan grammar juga. perlu menambahkan akan hal ini (menyusul)
-gimana kalau ada deck lain, apakah sudah terdeteksi ? kalau bellum perlu menambahkan untuk hal ini
-perlu buat fungsi yang sesuai misal nanti pakai UI (window / web sebagai wrapper)
+Deteksi kartu dari deck lain	                            [DONE]	
+Query rated:1 bersifat global untuk seluruh deck di Anki.   
 
-kurang jelas:
-- kalau format beda apa akan ditimpa dengan data baru dari anki (misal ada kanji lama yang terulang lagi (anki memang mengulang kanji))
-- apa penimpaan data aman ? (ga ada data hilang / null)
-- apa tes migrasi bisa diubah menjadi fitur resmi di script anki_sync ?
+Penimpaan data (overwrite) jika format beda	                [DONE]	
+Menggunakan is_content_different dan upsert untuk memperbarui data yang sudah ada.   
+
+Keamanan data (cegah data hilang/null)	                    [DONE]	
+build_rich_doc sekarang menangani field kosong dengan string 'null' secara aman.
+
+Jadikan migrasi fitur resmi	                                [DONE]	
+Sudah diintegrasikan di update_data.py dan menu utama.   
+
+Dukungan kartu Vocab & Grammar	                            [NIY]	
+Saat ini skrip masih terpaku pada field hardcoded 'Kanji' dan 'Meanings'.
+
+Wrapper UI (Window/Web)	                                    [NIY]	
+Masih berjalan sepenuhnya di antarmuka terminal.   
+
+Progress Bar untuk migrasi besar	                        [WIP]	
+Log konsol sudah ada, tapi belum ada indikator persentase untuk ribuan data.
+
+
+[High Priority] 
+Mapping Note Type Dinamis: 
+Buat sistem pemetaan field agar skrip bisa mendeteksi apakah kartu itu "Kanji", "Vocab", atau "Grammar" secara otomatis dan menyesuaikan format build_rich_doc-nya.
+
+[Safety] 
+Automatic Database Backup: 
+Tambahkan fungsi untuk menyalin file ./db_personal secara otomatis sebelum menjalankan run_migration guna mencegah korupsi data.
+
+[UX] 
+Search Filter by Metadata: 
+Tambahkan fitur pencarian yang difilter berdasarkan status kematangan (Mature) atau jumlah guratan (strokes).
+
+[Stability] 
+Error Handling AnkiConnect: 
+Tambahkan retry logic jika koneksi ke Anki terputus di tengah proses migrasi massal.

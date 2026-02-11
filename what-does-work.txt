@@ -5,9 +5,11 @@ Rich Document Construction	        Mengubah field-field terpisah (Kanji, Arti, C
 Manajemen Koleksi Fleksibel	        Mendukung pembuatan koleksi baru secara dinamis dan pengelolaan data (CRUD) secara manual maupun batch.
 Pusat Pengujian Terpadu	            Memiliki modul Central Testing untuk memverifikasi koneksi, logika ID, dan integritas model embedding sebelum digunakan dalam produksi.
 Pelacakan Metadata	                Menyimpan informasi tambahan seperti tingkat kematangan kartu (maturity), jumlah goresan kanji, dan tag untuk penyaringan data yang lebih mendalam.
+Migrasi Data Massal                 Fitur baru untuk memperbarui seluruh data lama di database ke format Rich Document terbaru secara batch.
+Dynamic Command Center              Menu navigasi hierarkis dengan sub-menu khusus untuk pengelolaan koleksi yang lebih rapi.
 
 main_chroma.py
-- main()	                Titik masuk utama program yang menampilkan menu navigasi dan manajemen koleksi.
+- main()	                    Titik masuk utama dengan menu 0-7 dan sub-menu manage_specific_collection.
 - semantic_search_flow()	    Menjalankan alur pencarian semantik dalam koleksi tertentu dengan fitur navigasi hasil.
 - manage_specific_collection()	Menu khusus untuk mengelola satu koleksi (insert, search, view, update, delete).
 
