@@ -32,6 +32,8 @@ def sync_anki_to_chroma(col_name):
         card_map = {cards['cardId']: cards for cards in cards_info}
 
         all_ids, all_docs, all_metas = [], [], []
+        update_count = 0 
+        skip_count = 0
         
         for note in notes_info:
             # DEBUG: Ambil semua nama field yang tersedia di kartu ini

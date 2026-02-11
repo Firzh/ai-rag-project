@@ -43,30 +43,23 @@ def semantic_search_flow(col_name):
 def main():
     while True:
         db.clear_screen()
-        collections = db.list_all_collections()
         
         print("============= Chroma DB Dynamic Command Center =============")
         print("1. Tambah Collection Baru")
         print("2. Search In Collection")
         print("3. Delete From Collection")
-        print("4. Collection Tabel View")
+        print("4. Tabel View Collection")
         print("5. Sync Anki")
-        print("6. Central Testing\n")
+        print("6. Testing")
+        print("7. List of Collections")
+        print("0. Keluar")
         
-        # Opsi 5 ke atas diisi oleh koleksi yang ada (Offset menjadi 5)
-        offset = 7
-        for i, name in enumerate(collections):
-            print(f"{i + offset}. {name.replace('_', ' ').title()}")
-            
-        exit_num = len(collections) + offset
-        print(f"\n{exit_num}. Keluar")
-        
-        choice = input(f"\nPilih opsi (1-{exit_num}): ")
+        choice = input("\nPilih opsi (1-8): ")
         
         if not choice.isdigit(): continue
         choice = int(choice)
 
-        # LOGIKA MENU UTAMA
+        # 1. TAMBAH KOLEKSI
         if choice == 1:
             new_name = input("Masukkan nama collection baru: ").lower().replace(" ", "_")
             if new_name:
@@ -74,9 +67,10 @@ def main():
                 print(f"✅ Collection '{new_name}' siap.")
                 input("Enter...")
 
+        # 2-6. AKSI GENERIC (Tetap menggunakan flow pilih koleksi di dalam)
         elif choice in [2, 3, 4, 5, 6]:
+            collections = db.list_all_collections()
             db.clear_screen()
-            # Mapping teks untuk menu pemilihan koleksi
             action_map = {2: "SEARCH", 3: "DELETE", 4: "VIEW", 5: "SYNC ANKI", 6: "TESTING"}
             target_action = action_map[choice]
             
@@ -93,15 +87,31 @@ def main():
                 elif choice == 6: main_test()
             else:
                 print("⚠️ Pilihan koleksi tidak valid.")
+            input("\nTekan Enter untuk kembali...")
+
+        # 7. MANAGE SPECIFIC COLLECTION (Sub-Menu Baru)
+        elif choice == 7:
+            collections = db.list_all_collections()
+            db.clear_screen()
+            print("--- DAFTAR KOLEKSI TERSEDIA ---")
+            for i, name in enumerate(collections):
+                print(f"{i + 1}. {name.replace('_', ' ').title()}")
             
-            input("\nTekan Enter untuk kembali ke menu utama...")
+            print(f"0. Kembali")
+            
+            idx = input("\nPilih koleksi yang ingin dikelola: ")
+            if idx.isdigit():
+                idx_int = int(idx)
+                if 0 < idx_int <= len(collections):
+                    selected_col = collections[idx_int - 1]
+                    manage_specific_collection(selected_col) # Pindah ke menu internal koleksi
+                elif idx_int == 0:
+                    continue
 
-        elif offset <= choice < exit_num:
-            selected_col = collections[choice - offset]
-            manage_specific_collection(selected_col)
-
-        elif choice == exit_num:
+        # 8. KELUAR
+        elif choice == 0:
             print("Sampai jumpa!")
+            db.clear_screen
             break
 
 def manage_specific_collection(col_name):
@@ -111,10 +121,10 @@ def manage_specific_collection(col_name):
         print("1. Insert Data")
         print("2. Search Semantic")
         print("3. Lihat Seluruh Data (Tabel View)")
-        print("4. Update Manual")
-        print("5. Delete")
+        print("4. Update Data")
+        print("5. Delete Data")
 
-        print("6. Kembali")
+        print("0. Kembali")
         
         p = input("\nPilih: ")
         if p == "1":
@@ -127,7 +137,7 @@ def manage_specific_collection(col_name):
             update.main_update(col_name)
         elif p == "5":
             delete.main_delete(col_name)
-        elif p == "6":
+        elif p == "0":
             break
         input("\nTekan Enter...")
 
