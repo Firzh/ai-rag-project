@@ -21,12 +21,13 @@ def run_update(col_name):
     db.clear_screen()
     print(f"✅ Berhasil memperbarui ID {target_id} di [{col_name}]")
 
-def run_migration(col_name):
+def run_migration(collection):
     """
     Migrasi massal data di database ke format Rich Document terbaru.
     Berdasarkan logika penarikan data di anki_sync dan pengujian di central_testing.
     """
-    db.clear_screen
+    col_name = collection.name
+    db.clear_screen()
     collection = db.get_collection(col_name)
     
     # 1. Ambil seluruh data dari database

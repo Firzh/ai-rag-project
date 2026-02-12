@@ -1,10 +1,36 @@
 import db_config as db
 import utilities.update_data as update
 import utilities.delete_data as delete
+import utilities.anki_sync as anki_sync
+import utilities.sanitizer as sanitizer
+import utilities.id_handler as id_handler
 from utilities.central_testing import main_test
 from utilities.insert_data import run_insert
 from utilities.view_data import run_view_data
 from utilities.anki_sync import sync_anki_to_chroma
+
+def handle_sync(selected_col_name):
+    """Fungsi buffer untuk menyiapkan Dependency Injection"""
+    # 1. Ubah string nama menjadi objek Koleksi
+    target_collection = db.get_collection(selected_col_name)
+    
+    # 2. Definisikan fungsi invoker lokal
+    def anki_invoker(action, **params):
+        import requests
+        import json
+        ANKI_URL = "http://localhost:8765"
+        return requests.post(
+            ANKI_URL, 
+            data=json.dumps({"action": action, "version": 6, "params": params})
+        ).json()
+
+    # 3. Suntikkan semua dependensi ke dalam fungsi inti
+    anki_sync.sync_anki_to_chroma(
+        collection=target_collection,
+        anki_invoker=anki_invoker,
+        sanitizer_tool=sanitizer,
+        id_tool=id_handler
+    )
 
 def semantic_search_flow(col_name):
     collection = db.get_collection(col_name)
@@ -54,7 +80,7 @@ def main():
         print("7. List of Collections")
         print("0. Keluar")
         
-        choice = input("\nPilih opsi (1-8): ")
+        choice = input("\nPilih opsi (0-7): ")
         
         if not choice.isdigit(): continue
         choice = int(choice)
@@ -83,11 +109,11 @@ def main():
                 if choice == 2: semantic_search_flow(selected)
                 elif choice == 3: delete.main_delete(selected)
                 elif choice == 4: run_view_data(selected)
-                elif choice == 5: sync_anki_to_chroma(selected)
+                elif choice == 5: handle_sync(selected)
                 elif choice == 6: main_test()
-            else:
-                print("⚠️ Pilihan koleksi tidak valid.")
-            input("\nTekan Enter untuk kembali...")
+                else:
+                    print("⚠️ Pilihan koleksi tidak valid.")
+                input("\nTekan Enter untuk kembali...")
 
         # 7. MANAGE SPECIFIC COLLECTION (Sub-Menu Baru)
         elif choice == 7:
@@ -111,7 +137,7 @@ def main():
         # 8. KELUAR
         elif choice == 0:
             print("Sampai jumpa!")
-            db.clear_screen
+            db.clear_screen()
             break
 
 def manage_specific_collection(col_name):
