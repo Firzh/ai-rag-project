@@ -7,29 +7,42 @@ import utilities.id_handler as id_handler
 from utilities.central_testing import main_test
 from utilities.insert_data import run_insert
 from utilities.view_data import run_view_data
-from utilities.anki_sync import sync_anki_to_chroma
+
+# 2. Re-use anki_invoker (atau buat fungsi global di main_chroma agar efisien)
+def anki_invoker(action, **params):
+    import requests, json
+    ANKI_URL = "http://localhost:8765"
+    try:
+        return requests.post(ANKI_URL, data=json.dumps({"action": action, "version": 6, "params": params})).json()
+    except:
+        return {"result": None, "error": "Anki is closed"}
 
 def handle_sync(selected_col_name):
     """Fungsi buffer untuk menyiapkan Dependency Injection"""
     # 1. Ubah string nama menjadi objek Koleksi
     target_collection = db.get_collection(selected_col_name)
     
-    # 2. Definisikan fungsi invoker lokal
-    def anki_invoker(action, **params):
-        import requests
-        import json
-        ANKI_URL = "http://localhost:8765"
-        return requests.post(
-            ANKI_URL, 
-            data=json.dumps({"action": action, "version": 6, "params": params})
-        ).json()
-
     # 3. Suntikkan semua dependensi ke dalam fungsi inti
     anki_sync.sync_anki_to_chroma(
         collection=target_collection,
         anki_invoker=anki_invoker,
         sanitizer_tool=sanitizer,
         id_tool=id_handler
+    )
+    
+def handle_update_center(selected_col_name):
+    """Fungsi jembatan untuk menyuntikkan semua dependensi ke Update Center."""
+    # 1. Siapkan objek Koleksi
+    target_collection = db.get_collection(selected_col_name)
+
+    # 3. Panggil main_update dengan menyuntikkan SEMUA dependensi
+    update.main_update(
+        collection=target_collection,
+        anki_invoker=anki_invoker,
+        anki_tools=anki_sync,  # anki_sync mengandung fungsi build_rich_doc
+        sanitizer_tool=sanitizer,
+        id_tool=id_handler,
+        ui_tool=db            # db_config digunakan untuk clear_screen
     )
 
 def semantic_search_flow(col_name):
@@ -160,7 +173,7 @@ def manage_specific_collection(col_name):
         elif p == "3":
             run_view_data(col_name)
         elif p == "4":
-            update.main_update(col_name)
+            handle_update_center(col_name)
         elif p == "5":
             delete.main_delete(col_name)
         elif p == "0":
